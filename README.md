@@ -1,5 +1,5 @@
-# IPv64-Blocklist for SSH-AuthLog
-Parser for IPv64-blocklist
+# IPv64.net Parser for Blocklist
+Parser for IPv64-Blocklist for SSH-AuthLog.
 
 Add your API key and the BlockerID.
 
