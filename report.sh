@@ -1,6 +1,7 @@
 # Set your API key/token and Blocker ID here
 API_KEY=""
 BLOCKER_ID=""
+SSH_PORT="22" # If another SSH port is used, adjust it individually here.
 
 # Function to report a list of poisoned IPs
 report_ip_list() {
@@ -41,7 +42,7 @@ extract_ips_from_ssh_log() {
         else
             JSON_DATA+=','
         fi
-        JSON_DATA+="{\"ip\":\"$IP\",\"category\":\"1\",\"info\":\"Failed login attempts detected\",\"port\":\"22\"}"
+        JSON_DATA+="{\"ip\":\"$IP\",\"category\":\"1\",\"info\":\"Failed login attempts detected\",\"port\":\"$SSH_PORT\"}"
     done
 
     JSON_DATA+=']}'
@@ -55,4 +56,3 @@ extract_ips_from_ssh_log() {
 
 # Example: Extract and report IPs from the SSH log and then clear the log file
 extract_ips_from_ssh_log "$SSH_LOG_FILE"
-
