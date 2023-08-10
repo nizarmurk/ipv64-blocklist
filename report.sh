@@ -78,7 +78,7 @@ extract_ips_from_ssh_log() {
             else
                 JSON_DATA+=','
             fi
-            JSON_DATA+="{\"ip\":\"$IP\",\"category\":\"11\",\"info\":\"Failed login attempts detected\",\"port\":\"$SSH_PORT\"}"
+            JSON_DATA+="{\"ip\":\"$IP\",\"category\":\"1\",\"info\":\"Failed login attempts detected\",\"port\":\"$SSH_PORT\"}"
         done
 
         JSON_DATA+=']}'
