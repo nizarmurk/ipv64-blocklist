@@ -32,32 +32,31 @@ CURRENT_TIMESTAMP=$(date +%s)
 TEMP_REPORTED_IPS_FILE="/var/log/reported_ips_temp.txt"
 touch "$TEMP_REPORTED_IPS_FILE"  # Create the temporary file if it doesn't exist
 while read -r line; do
-    IP=$(echo "$line" | awk '{print $1}')
-    EXPIRATION_TIME=$(echo "$line" | awk '{print $2}')
+    IP=$(echo "$line" | cut -d ' ' -f 1)
+    EXPIRATION_TIME=$(echo "$line" | cut -d ' ' -f 2)
     if [ "$CURRENT_TIMESTAMP" -le "$EXPIRATION_TIME" ]; then
         echo "$line" >> "$TEMP_REPORTED_IPS_FILE"
     fi
 done < "$REPORTED_IPS_FILE"
 mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
 
-# Extract IPs and usernames from the SSH log file and create JSON data
+# Extract IPs from the SSH log file and create JSON data
 extract_ips_from_ssh_log() {
     local LOG_FILE="$1"
-    local SUSPICIOUS_ENTRIES=()
+    local SUSPICIOUS_IPS=()
     local TEMP_IP_LIST=()
 
     # Current timestamp
     CURRENT_TIMESTAMP=$(date +%s)
 
     # Use awk to extract IPs from the log file
-    SUSPICIOUS_ENTRIES=($(awk '/Failed password/ { print $(NF-3) }' "$LOG_FILE" | sort | uniq))
-    SUSPICIOUS_ENTRIES+=($(awk '/Invalid user/ { print $(NF-1) }' "$LOG_FILE" | sort | uniq))
+    SUSPICIOUS_IPS=($(awk '/Failed password/ { print $(NF-3) }' "$LOG_FILE" | sort | uniq))
 
     # Check for duplicates and add IPs to the temporary list
-    for IP in "${SUSPICIOUS_ENTRIES[@]}"; do
-        if [ -n "$IP" ] && [ "$IP" != "port" ] && ! [[ " ${TEMP_IP_LIST[*]} " =~ " $IP " ]]; then
+    for IP in "${SUSPICIOUS_IPS[@]}"; do
+        if ! [[ " ${TEMP_IP_LIST[*]} " =~ " $IP " ]]; then
             # Check if IP is not in reported_ips file or expired
-            IP_EXPIRATION=$(grep "$IP" "$REPORTED_IPS_FILE" | awk '{print $2}')
+            IP_EXPIRATION=$(grep "$IP" "$REPORTED_IPS_FILE" | cut -d ' ' -f 2)
             if [[ -z "$IP_EXPIRATION" || "$CURRENT_TIMESTAMP" -gt "$IP_EXPIRATION" ]]; then
                 TEMP_IP_LIST+=("$IP")
 
