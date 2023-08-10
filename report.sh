@@ -50,7 +50,7 @@ extract_ips_from_ssh_log() {
     CURRENT_TIMESTAMP=$(date +%s)
 
     # Use awk to extract IPs from the log file
-    SUSPICIOUS_IPS=($(awk '/Failed password/ && $NF == port { print $(NF-3) }' port="$SSH_PORT" "$LOG_FILE" | sort | uniq))
+    SUSPICIOUS_IPS=($(awk '/Failed password/ { print $(NF-3) }' "$LOG_FILE" | sort | uniq))
 
     # Check for duplicates and add IPs to the temporary list
     for IP in "${SUSPICIOUS_IPS[@]}"; do
