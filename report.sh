@@ -40,20 +40,21 @@ while read -r line; do
 done < "$REPORTED_IPS_FILE"
 mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
 
-# Extract IPs from the SSH log file and create JSON data
+# Extract IPs and usernames from the SSH log file and create JSON data
 extract_ips_from_ssh_log() {
     local LOG_FILE="$1"
-    local SUSPICIOUS_IPS=()
+    local SUSPICIOUS_ENTRIES=()
     local TEMP_IP_LIST=()
 
     # Current timestamp
     CURRENT_TIMESTAMP=$(date +%s)
 
-    # Use awk to extract IPs from the log file
-    SUSPICIOUS_IPS=($(awk '/Failed password/ { print $(NF-3) }' "$LOG_FILE" | sort | uniq))
+    # Use awk to extract IPs and usernames from the log file
+    SUSPICIOUS_ENTRIES=($(awk '/Failed password/ { print $(NF-3) }' "$LOG_FILE" | sort | uniq))
+    SUSPICIOUS_ENTRIES+=($(awk '/Invalid user/ { print $(NF-1) }' "$LOG_FILE" | sort | uniq))
 
     # Check for duplicates and add IPs to the temporary list
-    for IP in "${SUSPICIOUS_IPS[@]}"; do
+    for IP in "${SUSPICIOUS_ENTRIES[@]}"; do
         if ! [[ " ${TEMP_IP_LIST[*]} " =~ " $IP " ]]; then
             # Check if IP is not in reported_ips file or expired
             IP_EXPIRATION=$(grep "$IP" "$REPORTED_IPS_FILE" | cut -d ' ' -f 2)
