@@ -1,13 +1,7 @@
 #!/bin/bash
 
-# Set your API key/token and Blocker ID here
-API_KEY=""
-BLOCKER_ID=""
-
-# SSH log file path
-SSH_LOG_FILE="/var/log/auth.log"
-# Set your SSH port here
-SSH_PORT="22"
+# Load configuration from config_report.txt
+source "$(dirname "${BASH_SOURCE[0]}")/config_report.txt"
 
 # File to store reported IPs and their expiration times
 REPORTED_IPS_FILE="/var/log/reported_ips.txt"
