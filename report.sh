@@ -33,7 +33,7 @@ extract_ips_from_ssh_log() {
         if ! [[ " ${TEMP_IP_LIST[*]} " =~ " $IP " ]]; then
             # Check if IP is not in reported_ips file or expired
             IP_EXPIRATION=$(grep "^$IP " "$REPORTED_IPS_FILE" | cut -d ' ' -f 2)
-            if [[ -z "$IP_EXPIRATION" || "$CURRENT_TIMESTAMP" -gt "$IP_EXPIRATION" ]]; then
+            if [ -z "$IP_EXPIRATION" ] || [ "$CURRENT_TIMESTAMP" -gt "$IP_EXPIRATION" ]; then
                 TEMP_IP_LIST+=("$IP")
 
                 # Add IP and expiration time to reported_ips file (4 hours from now)
