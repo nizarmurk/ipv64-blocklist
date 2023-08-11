@@ -1,0 +1,13 @@
+version: "3.2"
+services:
+  app:
+    build: .
+    image: nizar/ipv64-blocklist:latest
+    restart: always
+    volumes:
+      - data:/
+    # env_file:
+    #   - .env
+
+volumes:
+  data:
