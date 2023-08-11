@@ -31,7 +31,7 @@ To regularly execute this script and monitor for suspicious SSH login attempts, 
 
 ```bash
 crontab -e
-*/30 * * * * /bin/bash /report.sh
+*/30 * * * * /bin/bash /report.sh >/dev/null 2>&1
 
 
 
