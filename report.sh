@@ -13,6 +13,19 @@ report_ip_list() {
          "https://ipv64.net/api"
 }
 
+# Remove expired IPs from REPORTED_IPS_FILE
+CURRENT_TIMESTAMP=$(date +%s)
+TEMP_REPORTED_IPS_FILE="/var/log/reported_ips_temp.txt"
+touch "$TEMP_REPORTED_IPS_FILE"  # Create the temporary file if it doesn't exist
+while read -r line; do
+    IP=$(echo "$line" | cut -d ' ' -f 1)
+    EXPIRATION_TIME=$(echo "$line" | cut -d ' ' -f 2)
+    if [ "$CURRENT_TIMESTAMP" -le "$EXPIRATION_TIME" ]; then
+        echo "$line" >> "$TEMP_REPORTED_IPS_FILE"
+    fi
+done < "$REPORTED_IPS_FILE"
+mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
+
 # Extract IPs from the last hour of the SSH log file and create JSON data
 extract_ips_from_ssh_log() {
     local LOG_FILE="$1"
@@ -24,9 +37,6 @@ extract_ips_from_ssh_log() {
 
     # Use awk to extract IPs from the log file
     SUSPICIOUS_IPS=($(awk -v one_hour_ago="$ONE_HOUR_AGO" '$1" "$2 >= one_hour_ago && /Failed password/ { for (i=1; i<=NF; i++) { if ($i == "from" && $(i-1) != "Invalid") { print $(i+1) } } }' "$LOG_FILE" | sort | uniq))
-
-    # Current timestamp
-    CURRENT_TIMESTAMP=$(date +%s)
 
     # Check for duplicates and add IPs to the temporary list
     for IP in "${SUSPICIOUS_IPS[@]}"; do
