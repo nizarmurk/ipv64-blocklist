@@ -13,41 +13,26 @@ report_ip_list() {
          "https://ipv64.net/api"
 }
 
-# Ensure REPORTED_IPS_FILE exists or create it
-if [ ! -f "$REPORTED_IPS_FILE" ]; then
-    touch "$REPORTED_IPS_FILE"
-fi
-
-# Remove expired IPs from REPORTED_IPS_FILE
-CURRENT_TIMESTAMP=$(date +%s)
-TEMP_REPORTED_IPS_FILE="/var/log/reported_ips_temp.txt"
-touch "$TEMP_REPORTED_IPS_FILE"  # Create the temporary file if it doesn't exist
-while read -r line; do
-    IP=$(echo "$line" | cut -d ' ' -f 1)
-    EXPIRATION_TIME=$(echo "$line" | cut -d ' ' -f 2)
-    if [ "$CURRENT_TIMESTAMP" -le "$EXPIRATION_TIME" ]; then
-        echo "$line" >> "$TEMP_REPORTED_IPS_FILE"
-    fi
-done < "$REPORTED_IPS_FILE"
-mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
-
-# Extract IPs from the last 4 hours of the SSH log file and create JSON data
+# Extract IPs from the last hour of the SSH log file and create JSON data
 extract_ips_from_ssh_log() {
     local LOG_FILE="$1"
     local SUSPICIOUS_IPS=()
     local TEMP_IP_LIST=()
 
-    # Calculate the timestamp for 4 hours ago
-    FOUR_HOURS_AGO=$(date -d '4 hours ago' +%s)
+    # Calculate the timestamp for one hour ago
+    ONE_HOUR_AGO=$(date -d '1 hour ago' +'%Y-%m-%dT%H:%M:%S')
 
     # Use awk to extract IPs from the log file
-    SUSPICIOUS_IPS=($(awk -v four_hours_ago="$FOUR_HOURS_AGO" '$1" "$2 >= four_hours_ago && /Failed password/ { for (i=1; i<=NF; i++) { if ($i == "from" && $(i-1) != "Invalid") { print $(i+1) } } }' "$LOG_FILE" | sort | uniq))
+    SUSPICIOUS_IPS=($(awk -v one_hour_ago="$ONE_HOUR_AGO" '$1" "$2 >= one_hour_ago && /Failed password/ { for (i=1; i<=NF; i++) { if ($i == "from" && $(i-1) != "Invalid") { print $(i+1) } } }' "$LOG_FILE" | sort | uniq))
+
+    # Current timestamp
+    CURRENT_TIMESTAMP=$(date +%s)
 
     # Check for duplicates and add IPs to the temporary list
     for IP in "${SUSPICIOUS_IPS[@]}"; do
         if ! [[ " ${TEMP_IP_LIST[*]} " =~ " $IP " ]]; then
             # Check if IP is not in reported_ips file or expired
-            IP_EXPIRATION=$(grep "$IP" "$REPORTED_IPS_FILE" | cut -d ' ' -f 2)
+            IP_EXPIRATION=$(grep "^$IP " "$REPORTED_IPS_FILE" | cut -d ' ' -f 2)
             if [[ -z "$IP_EXPIRATION" || "$CURRENT_TIMESTAMP" -gt "$IP_EXPIRATION" ]]; then
                 TEMP_IP_LIST+=("$IP")
 
@@ -79,5 +64,5 @@ extract_ips_from_ssh_log() {
     fi
 }
 
-# Example: Extract and report IPs from the last 4 hours of the SSH log
+# Example: Extract and report IPs from the last hour of the SSH log
 extract_ips_from_ssh_log "$SSH_LOG_FILE"
