@@ -3,9 +3,6 @@
 # Load configuration from config_report.txt
 source "$(dirname "${BASH_SOURCE[0]}")/config_report.txt"
 
-# File to store reported IPs and their expiration times
-REPORTED_IPS_FILE="/var/log/reported_ips.txt"
-
 # Function to report a list of poisoned IPs
 report_ip_list() {
     local JSON_DATA="$1"
@@ -34,17 +31,17 @@ while read -r line; do
 done < "$REPORTED_IPS_FILE"
 mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
 
-# Extract IPs from the SSH log file and create JSON data
+# Extract IPs from the last 4 hours of the SSH log file and create JSON data
 extract_ips_from_ssh_log() {
     local LOG_FILE="$1"
     local SUSPICIOUS_IPS=()
     local TEMP_IP_LIST=()
 
-    # Current timestamp
-    CURRENT_TIMESTAMP=$(date +%s)
+    # Calculate the timestamp for 4 hours ago
+    FOUR_HOURS_AGO=$(date -d '4 hours ago' +%s)
 
     # Use awk to extract IPs from the log file
-    SUSPICIOUS_IPS=($(awk '/Failed password/ { print $(NF-3) }' "$LOG_FILE" | sort | uniq))
+    SUSPICIOUS_IPS=($(awk -v four_hours_ago="$FOUR_HOURS_AGO" '$1" "$2 >= four_hours_ago && /Failed password/ { for (i=1; i<=NF; i++) { if ($i == "from" && $(i-1) != "Invalid") { print $(i+1) } } }' "$LOG_FILE" | sort | uniq))
 
     # Check for duplicates and add IPs to the temporary list
     for IP in "${SUSPICIOUS_IPS[@]}"; do
@@ -80,12 +77,7 @@ extract_ips_from_ssh_log() {
         # Report all suspicious IPs in a single API request
         report_ip_list "$JSON_DATA"
     fi
-
-    # Clear the content of the log file if there are suspicious IPs to report
-    if [ ${#TEMP_IP_LIST[@]} -gt 0 ]; then
-        > "$LOG_FILE"
-    fi
 }
 
-# Example: Extract and report IPs from the SSH log and then clear the log file
+# Example: Extract and report IPs from the last 4 hours of the SSH log
 extract_ips_from_ssh_log "$SSH_LOG_FILE"
