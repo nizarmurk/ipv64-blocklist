@@ -1,3 +1,11 @@
-API_KEY=APY-KEY
-BLOCKER-ID=XXXXXX
-SSH-PORT=22
+# Set your API key/token and Blocker ID here
+API_KEY="XXXX"
+BLOCKER_ID="XXXX"
+
+# SSH log file path
+SSH_LOG_FILE="/var/log/auth.log"
+# Set your SSH port here
+SSH_PORT="22"
+
+# File to store reported IPs and their expiration times
+REPORTED_IPS_FILE="/var/log/reported_ips.txt"
