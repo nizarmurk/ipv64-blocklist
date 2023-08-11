@@ -25,7 +25,7 @@ extract_ips_from_ssh_log() {
 
     # Use awk to extract IPs from the log file (both formats)
     SUSPICIOUS_IPS=($(awk -v one_hour_ago_1="$ONE_HOUR_AGO_1" -v one_hour_ago_2="$ONE_HOUR_AGO_2" \
-        '$1" "$2 >= one_hour_ago_1 || $1" "$2 >= one_hour_ago_2 && /Failed password/ { for (i=1; i<=NF; i++) { if ($i == "from" && $(i-1) != "Invalid") { print $(i+1) } } }' \
+        '$1" "$2 >= one_hour_ago_1 || $1" "$2 >= one_hour_ago_2 && /Failed password/ { for (i=1; i<=NF; i++) { if ($i == "from" && $(i-1) != "Invalid") { match($(i+1), /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/); print substr($(i+1), RSTART, RLENGTH); } } }' \
         "$LOG_FILE" | sort | uniq))
 
     # Current timestamp
