@@ -13,30 +13,23 @@ report_ip_list() {
          "https://ipv64.net/api"
 }
 
-# Remove expired IPs from REPORTED_IPS_FILE
-CURRENT_TIMESTAMP=$(date +%s)
-TEMP_REPORTED_IPS_FILE="/var/log/reported_ips_temp.txt"
-touch "$TEMP_REPORTED_IPS_FILE"  # Create the temporary file if it doesn't exist
-while read -r line; do
-    IP=$(echo "$line" | cut -d ' ' -f 1)
-    EXPIRATION_TIME=$(echo "$line" | cut -d ' ' -f 2)
-    if [ "$CURRENT_TIMESTAMP" -le "$EXPIRATION_TIME" ]; then
-        echo "$line" >> "$TEMP_REPORTED_IPS_FILE"
-    fi
-done < "$REPORTED_IPS_FILE"
-mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
-
 # Extract IPs from the last hour of the SSH log file and create JSON data
 extract_ips_from_ssh_log() {
     local LOG_FILE="$1"
     local SUSPICIOUS_IPS=()
     local TEMP_IP_LIST=()
 
-    # Calculate the timestamp for one hour ago
-    ONE_HOUR_AGO=$(date -d '1 hour ago' +'%Y-%m-%dT%H:%M:%S')
+    # Calculate the timestamp for one hour ago (both formats)
+    ONE_HOUR_AGO_1=$(date -d '1 hour ago' +'%Y-%m-%dT%H:%M:%S')
+    ONE_HOUR_AGO_2=$(date -d '1 hour ago' +'%b %d %H:%M:%S')
 
-    # Use awk to extract IPs from the log file
-    SUSPICIOUS_IPS=($(awk -v one_hour_ago="$ONE_HOUR_AGO" '$1" "$2 >= one_hour_ago && /Failed password/ { for (i=1; i<=NF; i++) { if ($i == "from" && $(i-1) != "Invalid") { print $(i+1) } } }' "$LOG_FILE" | sort | uniq))
+    # Use awk to extract IPs from the log file (both formats)
+    SUSPICIOUS_IPS=($(awk -v one_hour_ago_1="$ONE_HOUR_AGO_1" -v one_hour_ago_2="$ONE_HOUR_AGO_2" \
+        '$1" "$2 >= one_hour_ago_1 || $1" "$2 >= one_hour_ago_2 && /Failed password/ { for (i=1; i<=NF; i++) { if ($i == "from" && $(i-1) != "Invalid") { print $(i+1) } } }' \
+        "$LOG_FILE" | sort | uniq))
+
+    # Current timestamp
+    CURRENT_TIMESTAMP=$(date +%s)
 
     # Check for duplicates and add IPs to the temporary list
     for IP in "${SUSPICIOUS_IPS[@]}"; do
