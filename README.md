@@ -8,6 +8,8 @@ This Bash script is designed to identify suspicious IP addresses that have attem
    ```bash
    source "$(dirname "${BASH_SOURCE[0]}")/config_report.txt"
 
+-> Please ensure that you execute this script using 'sudo' to ensure proper functionality. <-
+
 
 ## Reporting Function
 
@@ -30,7 +32,7 @@ The `extract_ips_from_ssh_log()` function is responsible for extracting suspicio
 To regularly execute this script and monitor for suspicious SSH login attempts, you can set up a cron job. Open your terminal and enter the following command to edit your crontab:
 
 ```bash
-crontab -e
+sudo crontab -e
 */30 * * * * /bin/bash /report.sh >/dev/null 2>&1
 
 
