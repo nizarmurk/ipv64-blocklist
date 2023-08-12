@@ -1,4 +1,6 @@
 #!/bin/bash
+# Load configuration from config_report.txt
+source "$(dirname "${BASH_SOURCE[0]}")/config_report.txt"
 
 config_file="/etc/rsyslog.conf"  # Adjust the path to the configuration file
 
@@ -36,15 +38,12 @@ if [ "$changes_made" = true ]; then
     echo "rsyslog service restarted."
 
     # Back up the auth.log
-    sudo cp "$SSH_LOG_FILE" /var/log/auth.log.backup
+    sudo cp $SSH_LOG_FILE /var/log/auth.log.backup
 
     # Clear the auth.log
-    sudo sh -c '> $SSH_LOG_FILE'
+    sudo sh -c "> $SSH_LOG_FILE"
     echo ""$SSH_LOG_FILE" backed up and cleared."
 fi
-
-# Load configuration from config_report.txt
-source "$(dirname "${BASH_SOURCE[0]}")/config_report.txt"
 
 # Function to report a list of poisoned IPs
 report_ip_list() {
