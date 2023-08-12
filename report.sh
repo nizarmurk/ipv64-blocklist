@@ -36,11 +36,11 @@ if [ "$changes_made" = true ]; then
     echo "rsyslog service restarted."
 
     # Back up the auth.log
-    sudo cp /var/log/auth.log /var/log/auth.log.backup
+    sudo cp "$SSH_LOG_FILE" /var/log/auth.log.backup
 
     # Clear the auth.log
-    sudo sh -c '> /var/log/auth.log'
-    echo "auth.log backed up and cleared."
+    sudo sh -c '> $SSH_LOG_FILE'
+    echo ""$SSH_LOG_FILE" backed up and cleared."
 fi
 
 # Load configuration from config_report.txt
