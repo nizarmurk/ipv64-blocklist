@@ -67,7 +67,7 @@ while read -r line; do
         echo "$line" >> "$TEMP_REPORTED_IPS_FILE"
     fi
 done < "$REPORTED_IPS_FILE"
-mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
+sudo mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
 
 # Extract IPs from the last hour of the SSH log file and create JSON data
 extract_ips_from_ssh_log() {
