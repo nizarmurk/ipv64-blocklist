@@ -4,6 +4,7 @@ BLOCKER_ID="XXXX"
 
 # SSH log file path
 SSH_LOG_FILE="/var/log/auth.log"
+#SSH_LOG_FILE="/var/log/secure" -> CentOS 9
 # Set your SSH port here
 SSH_PORT="22"
 
