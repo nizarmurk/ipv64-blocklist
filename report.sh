@@ -1,5 +1,48 @@
 #!/bin/bash
 
+config_file="/etc/rsyslog.conf"  # Adjust the path to the configuration file
+
+# Variable to track whether changes were made
+changes_made=false
+
+# Check if the template is already set
+if grep -qF '$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat' "$config_file"; then
+    echo "Template is set to RSYSLOG_TraditionalFileFormat."
+
+    # Remove the old line from the configuration file
+    sudo sed -i '/$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat/d' "$config_file"
+    echo "Removed the old template."
+    changes_made=true
+
+    # Add the new template if not already present
+    if ! grep -qF '$ActionFileDefaultTemplate RSYSLOG_FileFormat' "$config_file"; then
+        echo '$ActionFileDefaultTemplate RSYSLOG_FileFormat' | sudo tee -a "$config_file" > /dev/null
+        echo "Template RSYSLOG_FileFormat added."
+        changes_made=true
+    fi
+else
+    # Add the new template if not set to RSYSLOG_TraditionalFileFormat
+    if ! grep -qF '$ActionFileDefaultTemplate RSYSLOG_FileFormat' "$config_file"; then
+        echo '$ActionFileDefaultTemplate RSYSLOG_FileFormat' | sudo tee -a "$config_file" > /dev/null
+        echo "Template RSYSLOG_FileFormat added."
+        changes_made=true
+    fi
+fi
+
+# Only perform the following actions if changes were made
+if [ "$changes_made" = true ]; then
+    # Restart the rsyslog service
+    sudo systemctl restart rsyslog
+    echo "rsyslog service restarted."
+
+    # Back up the auth.log
+    sudo cp /var/log/auth.log /var/log/auth.log.backup
+
+    # Clear the auth.log
+    sudo sh -c '> /var/log/auth.log'
+    echo "auth.log backed up and cleared."
+fi
+
 # Load configuration from config_report.txt
 source "$(dirname "${BASH_SOURCE[0]}")/config_report.txt"
 
@@ -24,7 +67,7 @@ while read -r line; do
         echo "$line" >> "$TEMP_REPORTED_IPS_FILE"
     fi
 done < "$REPORTED_IPS_FILE"
-mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
+sudo mv "$TEMP_REPORTED_IPS_FILE" "$REPORTED_IPS_FILE"
 
 # Extract IPs from the last hour of the SSH log file and create JSON data
 extract_ips_from_ssh_log() {
